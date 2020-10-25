@@ -27,7 +27,7 @@ class C {
 
 void main() {
   initializeReflectable();
-  final injector = ReflectedInjector(new DynamicInjector());
+  final injector = ReflectedInjector(DynamicInjector());
 
   injector.asSingletonSelf<A>();
   injector.asSingletonSelf<B>();

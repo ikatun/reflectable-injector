@@ -4,6 +4,8 @@ import 'package:injector/src/exception/circular_dependency_exception.dart';
 import 'package:injector/src/exception/not_defined_exception.dart';
 import 'package:injector/src/factory/factory.dart';
 
+// this is copy-pasted Injector with an additional method to instantiate an object
+// using Type object instead of using T generic argument
 class DynamicInjector implements Injector {
   /// Stores [SingletonFactory] and [ProviderFactory] instances that have been
   /// registered by [registerSingleton] and [registerDependency] respectively.
