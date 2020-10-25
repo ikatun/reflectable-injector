@@ -1,2 +1,2 @@
-dart scripts/generate-reflectable.dart bin/main.dart
+dart scripts/generate-reflectable.dart example/main.dart
 
