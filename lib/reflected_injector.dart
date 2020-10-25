@@ -1,10 +1,22 @@
+import 'package:reflect_example/lazy.dart';
 import 'package:reflectable/reflectable.dart';
 
 import 'dynamic_injector.dart';
 
 class Reflector extends Reflectable {
   const Reflector()
-      : super(invokingCapability, typingCapability, reflectedTypeCapability, declarationsCapability, delegateCapability, staticInvokeCapability, newInstanceCapability);
+      : super(
+      invokingCapability,
+      typingCapability,
+      reflectedTypeCapability,
+      declarationsCapability,
+      delegateCapability,
+      staticInvokeCapability,
+      newInstanceCapability,
+      typeAnnotationQuantifyCapability,
+      metadataCapability,
+      typeRelationsCapability,
+  );
 }
 
 const reflector = const Reflector();
@@ -24,26 +36,29 @@ T instantiate<T>(DynamicInjector injector) {
 }
 
 class ReflectedInjector {
-  final DynamicInjector injector;
-  ReflectedInjector(this.injector);
-
-  asSingleton<TInterface, TImplementation extends TInterface>() {
-    injector.registerSingleton<TInterface>(() => instantiate<TImplementation>(injector));
+  final DynamicInjector innerInjector;
+  ReflectedInjector(this.innerInjector) {
+    innerInjector.registerSingleton<ReflectedInjector>(() => this);
+    this.asSingletonSelf<LazyInject>();
   }
 
-  asDependency<TInterface, TImplementation extends TInterface>() {
-    injector.registerDependency<TInterface>(() => instantiate<TImplementation>(injector));
+  void asSingleton<TInterface, TImplementation extends TInterface>() {
+    innerInjector.registerSingleton<TInterface>(() => instantiate<TImplementation>(innerInjector));
   }
 
-  asSingletonSelf<T>() {
+  void asDependency<TInterface, TImplementation extends TInterface>() {
+    innerInjector.registerDependency<TInterface>(() => instantiate<TImplementation>(innerInjector));
+  }
+
+  void asSingletonSelf<T>() {
     this.asSingleton<T, T>();
   }
 
-  asDependencySelf<T>() {
+  void asDependencySelf<T>() {
     this.asDependency<T, T>();
   }
 
   T get<T>() {
-    return injector.get<T>();
+    return innerInjector.get<T>();
   }
 }
