@@ -21,7 +21,7 @@ class B {
     print("B::ctor()");
   }
   method() {
-    print("A::method()");
+    print("B::method()");
   }
 }
 
