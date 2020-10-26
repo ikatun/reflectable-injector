@@ -16,7 +16,7 @@ Dart v2.10 or newer
 ```
 
 ## Usage
-Usage with both standard and *lazy* dependencies is shown in bin/main.dart file
+Usage with both standard and *lazy* dependencies is shown in example/main.dart file
 
 ## Generating main.reflectable.dart
 Since flutter and dart2native don't dart:mirrors, required metadata cannot be extracted using dart:mirrors.
