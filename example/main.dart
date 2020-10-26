@@ -1,45 +1,65 @@
 import 'package:reflect_example/dynamic_injector.dart';
 import 'package:reflect_example/lazy.dart';
 import 'package:reflect_example/reflected_injector.dart';
+import 'package:reflect_example/reflectors.dart';
 
 import 'main.reflectable.dart';
 
-@reflector
+@dependency
+@DependencyScope.Singleton
 class A {
-}
-
-@reflector
-class B {
-  final A a;
-  B(this.a);
-}
-
-@reflector
-class C {
-  final A a;
-  final B b;
-  C(this.a, this.b);
-
-  method() {
-    print("I'm C's method");
+  A() {
+    print("A::ctor()");
   }
 }
 
-@reflector
+@dependency
+@DependencyScope.Singleton
+class B {
+  final A a;
+  B(this.a) {
+    print("B::ctor()");
+  }
+  method() {
+    print("A::method()");
+  }
+}
+
+@dependency
+@DependencyScope.Singleton
+class C {
+  final A a;
+  final B b;
+  C(this.a, this.b) {
+    print("C::ctor()");
+  }
+
+  method() {
+    print("C::method()");
+  }
+}
+
+@dependency
+@DependencyScope.Singleton
 class CyclicA {
   final CyclicB cyclicB;
-  CyclicA(this.cyclicB);
+  CyclicA(this.cyclicB) {
+    print("CyclicA::ctor()");
+  }
 
   methodA() {
     print('calling CyclicA::methodA()');
   }
 }
 
-@reflector
+@dependency
+@DependencyScope.Singleton
 class CyclicB {
   final Lazy<CyclicA> cyclicA;
   CyclicB(LazyInject lazy):
-        cyclicA = lazy.as<CyclicA>();
+        cyclicA = lazy.as<CyclicA>() {
+    print("CyclicB::ctor()");
+  }
 
   methodB() {
     print('calling CyclicA::methodB()');
@@ -47,8 +67,18 @@ class CyclicB {
   }
 }
 
-
 void main() {
+  initializeReflectable();
+  final injector = ReflectedInjector(DynamicInjector(), autoRegister: true);
+  injector.get<C>().method();
+  injector.get<B>().method();
+
+  injector.get<CyclicB>().methodB();
+}
+
+// or variant with manual dependency registration
+// this ignores @DependencyScope annotation
+void mainManual() {
   initializeReflectable();
   final injector = ReflectedInjector(DynamicInjector());
 

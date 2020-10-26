@@ -52,6 +52,18 @@ class DynamicInjector implements Injector {
     _factoryMap[identity] = factory;
   }
 
+  void registerDynamic(Type t, Factory factory, {bool override = false, String dependencyName = ""}) {
+    _checkValidationDynamic(t);
+
+    final identity = _getIdentityDynamic(t, dependencyName);
+
+    if (!override) {
+      _checkForDuplicatesDynamic(t, identity);
+    }
+
+    _factoryMap[identity] = factory;
+  }
+
   /// Registers the [builder] with a [Factory.singleton] factory.
   void registerSingleton<T>(
       Builder<T> builder, {
@@ -60,6 +72,15 @@ class DynamicInjector implements Injector {
       }) =>
       this.register(Factory.singleton(builder), override: override, dependencyName: dependencyName);
 
+  /// Registers the [builder] with a [Factory.singleton] factory.
+  void registerSingletonDynamic(
+      Type t,
+      Builder builder, {
+        bool override = false,
+        String dependencyName = "",
+      }) =>
+      this.registerDynamic(t, Factory.singleton(builder), override: override, dependencyName: dependencyName);
+
   /// Registers the [builder] with a [Factory.provider] factory.
   void registerDependency<T>(
       Builder<T> builder, {
@@ -67,6 +88,15 @@ class DynamicInjector implements Injector {
         String dependencyName = "",
       }) =>
       this.register(Factory.provider(builder), override: override, dependencyName: dependencyName);
+
+  /// Registers the [builder] with a [Factory.provider] factory.
+  void registerDependencyDynamic(
+      Type t,
+      Builder builder, {
+        bool override = false,
+        String dependencyName = "",
+      }) =>
+      this.registerDynamic(t, Factory.provider(builder), override: override, dependencyName: dependencyName);
 
   /// Whenever a factory is called to get a dependency
   /// the identifier of that factory is saved to this list and
@@ -114,6 +144,15 @@ class DynamicInjector implements Injector {
       _factoryCallIds.clear();
       rethrow;
     }
+  }
+
+  bool existsDynamic(Type t) {
+    _checkValidationDynamic(t);
+
+    final dependencyKey = _getIdentityDynamic(t);
+    // print('dependencyKey ' + dependencyKey + ' ' + t.toString());
+    // print(_factoryMap);
+    return _factoryMap.containsKey(dependencyKey);
   }
 
   dynamic getDynamic(Type t, {String dependencyName = ""}) {
@@ -203,6 +242,12 @@ class DynamicInjector implements Injector {
     }
   }
 
+  void _checkForDuplicatesDynamic(Type t, String identity) {
+    if (_factoryMap.containsKey(identity)) {
+      throw AlreadyDefinedException(type: t.toString());
+    }
+  }
+
   String _getIdentity<T>(String dependencyName) => "$dependencyName${T.hashCode.toString()}";
-  String _getIdentityDynamic(Type t, String dependencyName) => "$dependencyName${t.hashCode.toString()}";
+  String _getIdentityDynamic(Type t, [String dependencyName = '']) => "$dependencyName${t.hashCode.toString()}";
 }

@@ -1,6 +1,8 @@
 import 'package:reflect_example/reflected_injector.dart';
+import 'package:reflect_example/reflectors.dart';
 
-@reflector
+@dependency
+@DependencyScope.Singleton
 class LazyInject {
   final ReflectedInjector injector;
   LazyInject(this.injector);

@@ -1,25 +1,8 @@
 import 'package:reflect_example/lazy.dart';
+import 'package:reflect_example/reflectors.dart';
 import 'package:reflectable/reflectable.dart';
 
 import 'dynamic_injector.dart';
-
-class Reflector extends Reflectable {
-  const Reflector()
-      : super(
-      invokingCapability,
-      typingCapability,
-      reflectedTypeCapability,
-      declarationsCapability,
-      delegateCapability,
-      staticInvokeCapability,
-      newInstanceCapability,
-      typeAnnotationQuantifyCapability,
-      metadataCapability,
-      typeRelationsCapability,
-  );
-}
-
-const reflector = const Reflector();
 
 MethodMirror getCtor(ClassMirror mirror) {
   return mirror.declarations.values.where((declare) {
@@ -28,17 +11,48 @@ MethodMirror getCtor(ClassMirror mirror) {
 }
 
 T instantiate<T>(DynamicInjector injector) {
-  ClassMirror mirror = reflector.reflectType(T);
+  ClassMirror mirror = dependency.reflectType(T);
+
   final ctor = getCtor(mirror);
   final ctorArgsTypes = ctor.parameters.map((p) => p.type);
   final args = ctorArgsTypes.map((t) => injector.getDynamic(t.reflectedType));
   return mirror.newInstance('', args.toList());
 }
 
+dynamic instantiateWithAutoRegister(DynamicInjector injector, Type t) {
+  if (injector.existsDynamic(t)) {
+    return injector.getDynamic(t);
+  }
+
+  ClassMirror mirror = dependency.reflectType(t);
+  final ctor = getCtor(mirror);
+  final ctorArgsTypes = ctor.parameters.map((p) => p.type);
+  final provider = () {
+    final args = ctorArgsTypes.map((t) {
+      return instantiateWithAutoRegister(injector, t.reflectedType);
+    });
+    return mirror.newInstance('', args.toList());
+  };
+
+  final isSingleton = mirror.metadata.contains(DependencyScope.Singleton);
+  final isInstance = mirror.metadata.contains(DependencyScope.Instance);
+
+  if (isSingleton) {
+    injector.registerSingletonDynamic(t, provider);
+  } else if (isInstance) {
+    injector.registerDependencyDynamic(t, provider);
+  } else {
+    throw new Exception('Could not determine dependency scope');
+  }
+
+  return injector.getDynamic(t);
+}
+
 class ReflectedInjector {
   final DynamicInjector innerInjector;
-  ReflectedInjector(this.innerInjector) {
-    innerInjector.registerSingleton<ReflectedInjector>(() => this);
+  final bool autoRegister;
+  ReflectedInjector(this.innerInjector, { this.autoRegister = false }) {
+    this.asExistingInstanceSelf(this);
     this.asSingletonSelf<LazyInject>();
   }
 
@@ -58,7 +72,11 @@ class ReflectedInjector {
     this.asDependency<T, T>();
   }
 
+  void asExistingInstanceSelf<T>(T instance) {
+    innerInjector.registerSingleton<T>(() => instance);
+  }
+
   T get<T>() {
-    return innerInjector.get<T>();
+    return autoRegister ? instantiateWithAutoRegister(innerInjector, T) : innerInjector.get<T>();
   }
 }
