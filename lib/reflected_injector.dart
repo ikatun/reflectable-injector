@@ -14,8 +14,8 @@ T instantiate<T>(DynamicInjector injector) {
   ClassMirror mirror = dependency.reflectType(T);
 
   final ctor = getCtor(mirror);
-  final ctorArgsTypes = ctor.parameters.map((p) => p.type);
-  final args = ctorArgsTypes.map((t) => injector.getDynamic(t.reflectedType));
+  final ctorArgsTypes = ctor.parameters.map((p) => p.reflectedType);
+  final args = ctorArgsTypes.map((t) => injector.getDynamic(t));
   return mirror.newInstance('', args.toList());
 }
 
